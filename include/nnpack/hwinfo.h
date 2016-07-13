@@ -6,6 +6,7 @@
 #include <nnpack/macros.h>
 #include <nnpack/transform.h>
 #include <nnpack/blas.h>
+#include <nnpack/relu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,41 +40,68 @@ struct cache_blocking_info {
 };
 
 struct transforms {
-	nnp_transform_2d fft8x8;
+	nnp_transform_2d fft8x8_and_store;
+	nnp_transform_2d fft8x8_and_stream;
 	nnp_transform_2d ifft8x8;
 	nnp_transform_2d_with_bias ifft8x8_with_bias;
-	nnp_transform_2d fft16x16;
+	nnp_transform_2d fft16x16_and_store;
+	nnp_transform_2d fft16x16_and_stream;
 	nnp_transform_2d ifft16x16;
 	nnp_transform_2d_with_bias ifft16x16_with_bias;
-	nnp_transform_2d iwt_f6x6_3x3;
+	nnp_transform_2d iwt_f6x6_3x3_and_store;
+	nnp_transform_2d iwt_f6x6_3x3_and_stream;
 	nnp_transform_2d kwt_f6x6_3x3;
 	nnp_transform_2d kwt_f6x6_3Rx3R;
 	nnp_transform_2d owt_f6x6_3x3;
 	nnp_transform_2d_with_bias owt_f6x6_3x3_with_bias;
 };
 
+struct blockmac {
+	nnp_blockmac fourier8x8_mac_with_conj;
+	nnp_blockmac fourier16x16_mac_with_conj;
+	nnp_blockmac winograd8x8_mac;
+};
+
+struct activations {
+	nnp_inplace_relu_function inplace_relu;
+	nnp_outplace_relu_function outplace_relu;
+	nnp_gradient_relu_function outplace_grad_relu;
+};
+
 struct sgemm {
+	nnp_fast_sgemm_function only_mr_x_nr;
+	nnp_full_sgemm_function upto_mr_x_nr;
 	uint32_t mr;
 	uint32_t nr;
-	nnp_fast_sgemm_function fast_sgemm_function;
-	nnp_full_sgemm_function full_sgemm_function;
 };
 
 struct sxgemm {
+	nnp_fast_tuple_gemm_function only_mr_x_nr;
+	nnp_full_tuple_gemm_function upto_mr_x_nr;
 	uint32_t mr;
 	uint32_t nr;
-	nnp_tuple_gemm_function* functions;
 };
 
 struct cxgemm {
+	nnp_fast_tuple_gemm_function s4cX_only_mr_x_nr;
+	nnp_full_tuple_gemm_function s4cX_upto_mr_x_nr;
+	nnp_fast_tuple_gemm_function cX_only_mr_x_nr;
+	nnp_full_tuple_gemm_function cX_upto_mr_x_nr;
+	nnp_fast_tuple_gemm_function s4cX_conjb_only_mr_x_nr;
+	nnp_full_tuple_gemm_function s4cX_conjb_upto_mr_x_nr;
+	nnp_fast_tuple_gemm_function cX_conjb_only_mr_x_nr;
+	nnp_full_tuple_gemm_function cX_conjb_upto_mr_x_nr;
+	nnp_fast_tuple_gemm_function s4cX_conjb_transc_only_mr_x_nr;
+	nnp_full_tuple_gemm_function s4cX_conjb_transc_upto_mr_x_nr;
+	nnp_fast_tuple_gemm_function cX_conjb_transc_only_mr_x_nr;
+	nnp_full_tuple_gemm_function cX_conjb_transc_upto_mr_x_nr;
 	uint32_t mr;
 	uint32_t nr;
-	nnp_tuple_gemm_function* functions;
 };
 
 struct sdotxf {
+	const nnp_sdotxf_function* functions;
 	uint32_t fusion;
-	nnp_sdotxf_function* functions;
 };
 
 struct hardware_info {
@@ -85,6 +113,8 @@ struct hardware_info {
 	struct cache_blocking_info blocking;
 
 	struct transforms transforms;
+	struct blockmac blockmac;
+	struct activations activations;
 	struct sgemm sgemm;
 	struct sxgemm sxgemm;
 	struct cxgemm cxgemm;
